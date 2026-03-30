@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perri Pomodoro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IM+Fell+English&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; background: #1A1208; overflow-x: hidden; font-family: 'Press Start 2P', monospace; }
+  :root {
+    --pom-light: #C4314B; --pom-dark: #5C0E1E;
+    --gold: #C9912A; --gold-light: #F0C060; --gold-dark: #7A5510;
+    --stone: #2A2018; --stone-mid: #3D3024; --stone-light: #5C4A32;
+    --cream: #F2E8D0; --cream-dim: #B8A98A;
+    --purple: #6A5AAC; --purple-dark: #2D2347;
+  }
+  .wrap {
+    width: 100%;
+    background: linear-gradient(180deg, #1A1208 0%, #2A1E0E 100%);
+    border-top: 3px solid var(--gold-dark);
+    border-bottom: 3px solid var(--gold-dark);
+    padding: 14px 16px 16px;
+    position: relative; overflow: hidden;
+  }
+  .wrap::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none;
+  }
+  .corner { position: absolute; width: 14px; height: 14px; background: var(--gold-dark); z-index: 2; }
+  .corner.tl { top: 0; left: 0; } .corner.tr { top: 0; right: 0; }
+  .corner.bl { bottom: 0; left: 0; } .corner.br { bottom: 0; right: 0; }
+  .header { text-align: center; margin-bottom: 12px; position: relative; z-index: 1; }
+  .header-title { font-family: 'IM Fell English', serif; font-size: 10px; color: var(--cream-dim); letter-spacing: 0.25em; text-transform: uppercase; font-style: italic; }
+  .mode-row { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; position: relative; z-index: 1; }
+  .mode-btn { font-family: 'Press Start 2P', monospace; font-size: 5px; padding: 6px 10px; background: var(--stone); color: var(--cream-dim); border-top: 2px solid var(--stone-light); border-left: 2px solid var(--stone-light); border-right: 2px solid #0D0A06; border-bottom: 2px solid #0D0A06; cursor: pointer; letter-spacing: 0.08em; }
+  .mode-btn.active.work { background: var(--pom-dark); color: var(--cream); border-top-color: var(--pom-light); border-left-color: var(--pom-light); }
+  .mode-btn.active.rest { background: var(--purple-dark); color: var(--cream); border-top-color: var(--purple); border-left-color: var(--purple); }
+  .cat-area { display: flex; justify-content: center; margin-bottom: 10px; position: relative; z-index: 1; min-height: 80px; align-items: flex-end; }
+  .cat-bart { display: none; }
+  .cat-honey { display: none; }
+  .cat-bart.visible, .cat-honey.visible { display: block; }
+  .cat-name { font-size: 5px; color: var(--cream-dim); text-align: center; margin-bottom: 8px; position: relative; z-index: 1; letter-spacing: 0.08em; }
+  .timer-box { position: relative; z-index: 1; background: var(--stone); border-top: 3px solid var(--stone-light); border-left: 3px solid var(--stone-light); border-right: 3px solid #0D0A06; border-bottom: 3px solid #0D0A06; padding: 16px 8px 12px; text-align: center; margin-bottom: 12px; }
+  .timer-box.work-mode { border-top-color: var(--pom-light); border-left-color: var(--pom-light); }
+  .timer-box.rest-mode { border-top-color: var(--purple); border-left-color: var(--purple); }
+  .timer-display { font-size: 28px; color: var(--cream); letter-spacing: 0.05em; line-height: 1; margin-bottom: 8px; }
+  .timer-label { font-size: 5px; color: var(--cream-dim); letter-spacing: 0.15em; }
+  .pip-bar { display: flex; gap: 4px; justify-content: center; margin-top: 10px; }
+  .t-pip { width: 8px; height: 8px; background: var(--stone-light); }
+  .t-pip.on.work { background: var(--pom-light); }
+  .t-pip.on.rest { background: var(--purple); }
+  .btn-row { display: flex; gap: 8px; justify-content: center; position: relative; z-index: 1; }
+  .ctrl-btn { font-family: 'Press Start 2P', monospace; font-size: 6px; padding: 8px 14px; cursor: pointer; letter-spacing: 0.08em; }
+  .ctrl-btn.start { background: var(--pom-dark); color: var(--cream); border-top: 2px solid var(--pom-light); border-left: 2px solid var(--pom-light); border-right: 2px solid #0D0A06; border-bottom: 2px solid #0D0A06; }
+  .ctrl-btn.start.rest-active { background: var(--purple-dark); border-top-color: var(--purple); border-left-color: var(--purple); }
+  .ctrl-btn.reset { background: var(--stone); color: var(--cream-dim); border-top: 2px solid var(--stone-light); border-left: 2px solid var(--stone-light); border-right: 2px solid #0D0A06; border-bottom: 2px solid #0D0A06; }
+  .ctrl-btn:active { border-top-color: #0D0A06 !important; border-left-color: #0D0A06 !important; border-right-color: var(--stone-light) !important; border-bottom-color: var(--stone-light) !important; }
+  .session-count { text-align: center; font-size: 5px; color: var(--gold); margin-top: 10px; position: relative; z-index: 1; letter-spacing: 0.1em; }
+  .divider-gem { width: 24px; height: 2px; background: var(--stone-light); position: relative; display: inline-block; vertical-align: middle; margin: 0 8px; }
+  .divider-gem::before { content: ''; position: absolute; width: 6px; height: 6px; background: var(--pom-light); top: -2px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+  <div class="header">
+    <div class="header-title">✦ The Focus Chamber ✦</div>
+  </div>
+  <div class="mode-row">
+    <button class="mode-btn work active" onclick="setMode('work')">WORK · 25</button>
+    <button class="mode-btn rest" onclick="setMode('rest')">REST · 5</button>
+    <button class="mode-btn rest" onclick="setMode('long')">LONG REST · 15</button>
+  </div>
+  <div class="cat-area">
+    <!-- Bartholomew: grey tabby, alert, watching you work -->
+    <svg class="cat-bart visible" width="80" height="80" viewBox="0 0 32 32" style="image-rendering:pixelated;">
+      <rect x="7" y="3" width="4" height="5" fill="#8A8A8A"/>
+      <rect x="8" y="4" width="2" height="3" fill="#C4A0A0"/>
+      <rect x="21" y="3" width="4" height="5" fill="#8A8A8A"/>
+      <rect x="22" y="4" width="2" height="3" fill="#C4A0A0"/>
+      <rect x="8" y="7" width="16" height="11" fill="#9A9A9A"/>
+      <rect x="7" y="8" width="2" height="8" fill="#9A9A9A"/>
+      <rect x="23" y="8" width="2" height="8" fill="#9A9A9A"/>
+      <rect x="10" y="7" width="2" height="2" fill="#707070"/>
+      <rect x="16" y="7" width="2" height="2" fill="#707070"/>
+      <rect x="13" y="8" width="2" height="1" fill="#707070"/>
+      <rect x="10" y="11" width="4" height="3" fill="#2A6A2A"/>
+      <rect x="11" y="11" width="2" height="3" fill="#1A1208"/>
+      <rect x="18" y="11" width="4" height="3" fill="#2A6A2A"/>
+      <rect x="19" y="11" width="2" height="3" fill="#1A1208"/>
+      <rect x="11" y="11" width="1" height="1" fill="#F2E8D0"/>
+      <rect x="19" y="11" width="1" height="1" fill="#F2E8D0"/>
+      <rect x="15" y="15" width="2" height="1" fill="#C4314B"/>
+      <rect x="13" y="16" width="2" height="1" fill="#707070"/>
+      <rect x="17" y="16" width="2" height="1" fill="#707070"/>
+      <rect x="5" y="15" width="5" height="1" fill="#D0D0D0"/>
+      <rect x="22" y="15" width="5" height="1" fill="#D0D0D0"/>
+      <rect x="4" y="14" width="4" height="1" fill="#D0D0D0"/>
+      <rect x="24" y="14" width="4" height="1" fill="#D0D0D0"/>
+      <rect x="9" y="18" width="14" height="9" fill="#8A8A8A"/>
+      <rect x="8" y="19" width="2" height="7" fill="#8A8A8A"/>
+      <rect x="22" y="19" width="2" height="7" fill="#8A8A8A"/>
+      <rect x="10" y="19" width="2" height="6" fill="#707070"/>
+      <rect x="14" y="20" width="2" height="5" fill="#707070"/>
+      <rect x="18" y="19" width="2" height="6" fill="#707070"/>
+      <rect x="12" y="20" width="8" height="7" fill="#B8B8B8"/>
+      <rect x="9" y="27" width="4" height="2" fill="#8A8A8A"/>
+      <rect x="19" y="27" width="4" height="2" fill="#8A8A8A"/>
+      <rect x="23" y="22" width="2" height="5" fill="#8A8A8A"/>
+      <rect x="24" y="21" width="3" height="2" fill="#8A8A8A"/>
+    </svg>
+    <!-- Honey: orange menace, lounging -->
+    <svg class="cat-honey" width="100" height="60" viewBox="0 0 40 24" style="image-rendering:pixelated;">
+      <rect x="4" y="10" width="24" height="9" fill="#D4680A"/>
+      <rect x="4" y="11" width="24" height="7" fill="#E8821A"/>
+      <rect x="7" y="10" width="2" height="9" fill="#D4680A"/>
+      <rect x="13" y="10" width="2" height="9" fill="#D4680A"/>
+      <rect x="19" y="10" width="2" height="9" fill="#D4680A"/>
+      <rect x="8" y="12" width="14" height="5" fill="#F5C880"/>
+      <rect x="26" y="6" width="11" height="10" fill="#E8821A"/>
+      <rect x="27" y="5" width="9" height="2" fill="#E8821A"/>
+      <rect x="28" y="3" width="3" height="4" fill="#E8821A"/>
+      <rect x="29" y="4" width="1" height="2" fill="#C4A0A0"/>
+      <rect x="34" y="3" width="3" height="4" fill="#E8821A"/>
+      <rect x="35" y="4" width="1" height="2" fill="#C4A0A0"/>
+      <rect x="28" y="10" width="4" height="2" fill="#C9912A"/>
+      <rect x="29" y="11" width="2" height="1" fill="#1A1208"/>
+      <rect x="34" y="10" width="4" height="2" fill="#C9912A"/>
+      <rect x="35" y="11" width="2" height="1" fill="#1A1208"/>
+      <rect x="28" y="10" width="4" height="1" fill="#E8821A"/>
+      <rect x="34" y="10" width="4" height="1" fill="#E8821A"/>
+      <rect x="32" y="13" width="2" height="1" fill="#C4314B"/>
+      <rect x="22" y="13" width="5" height="1" fill="#F5C880"/>
+      <rect x="22" y="12" width="4" height="1" fill="#F5C880"/>
+      <rect x="4" y="18" width="5" height="3" fill="#E8821A"/>
+      <rect x="11" y="18" width="5" height="3" fill="#E8821A"/>
+      <rect x="1" y="12" width="4" height="3" fill="#E8821A"/>
+      <rect x="0" y="10" width="3" height="4" fill="#E8821A"/>
+      <rect x="1" y="9" width="3" height="2" fill="#E8821A"/>
+    </svg>
+  </div>
+  <div class="cat-name" id="cat-name">BARTHOLOMEW IS WATCHING YOU WORK</div>
+  <div class="timer-box work-mode" id="timer-box">
+    <div class="timer-display" id="timer">25:00</div>
+    <div class="timer-label" id="timer-label">FOCUS · DO THE THING</div>
+    <div class="pip-bar" id="pip-bar"></div>
+  </div>
+  <div class="btn-row">
+    <button class="ctrl-btn start" id="start-btn" onclick="toggleTimer()">START</button>
+    <button class="ctrl-btn reset" onclick="resetTimer()">RESET</button>
+  </div>
+  <div class="session-count">
+    <span class="divider-gem"></span>
+    <span id="session-text">SESSION 1 · 0 COMPLETE</span>
+    <span class="divider-gem"></span>
+  </div>
+</div>
+<script>
+const MODES = {
+  work: { mins: 25, label: 'FOCUS · DO THE THING', catLabel: 'BARTHOLOMEW IS WATCHING YOU WORK', colorClass: 'work-mode', pipClass: 'work' },
+  rest: { mins: 5, label: 'REST · YOU EARNED IT', catLabel: 'HONEY SAYS STAY DOWN', colorClass: 'rest-mode', pipClass: 'rest' },
+  long: { mins: 15, label: 'LONG REST · DESCEND GENTLY', catLabel: 'HONEY SAYS STAY DOWN', colorClass: 'rest-mode', pipClass: 'rest' },
+};
+let mode = 'work', totalSeconds = 25*60, remaining = 25*60, running = false, interval = null, sessionsComplete = 0, currentSession = 1;
+
+function setMode(m) {
+  if (running) return;
+  mode = m; totalSeconds = MODES[m].mins * 60; remaining = totalSeconds;
+  updateDisplay(); updateUI();
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active','work','rest'));
+  const btns = document.querySelectorAll('.mode-btn');
+  const idx = m === 'work' ? 0 : m === 'rest' ? 1 : 2;
+  btns[idx].classList.add('active', m === 'work' ? 'work' : 'rest');
+}
+
+function updateDisplay() {
+  const m = Math.floor(remaining/60), s = remaining%60;
+  document.getElementById('timer').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function updatePips() {
+  const bar = document.getElementById('pip-bar'); bar.innerHTML = '';
+  const slots = 8, filled = Math.round(((totalSeconds-remaining)/totalSeconds)*slots);
+  for (let i = 0; i < slots; i++) {
+    const p = document.createElement('div');
+    p.className = 't-pip' + (i < filled ? ' on ' + MODES[mode].pipClass : '');
+    bar.appendChild(p);
+  }
+}
+
+function updateUI() {
+  const isWork = mode === 'work';
+  document.getElementById('timer-box').className = 'timer-box ' + MODES[mode].colorClass;
+  document.getElementById('timer-label').textContent = MODES[mode].label;
+  document.getElementById('cat-name').textContent = MODES[mode].catLabel;
+  const bart = document.querySelector('.cat-bart'), honey = document.querySelector('.cat-honey');
+  if (isWork) { bart.classList.add('visible'); honey.classList.remove('visible'); }
+  else { honey.classList.add('visible'); bart.classList.remove('visible'); }
+  const btn = document.getElementById('start-btn');
+  btn.className = 'ctrl-btn start' + (isWork ? '' : ' rest-active');
+  updatePips();
+}
+
+function toggleTimer() {
+  if (running) {
+    clearInterval(interval); running = false;
+    document.getElementById('start-btn').textContent = 'RESUME';
+  } else {
+    running = true;
+    document.getElementById('start-btn').textContent = 'PAUSE';
+    interval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(interval); running = false;
+        if (mode === 'work') { sessionsComplete++; currentSession++; }
+        document.getElementById('start-btn').textContent = 'START';
+        remaining = 0;
+      }
+      updateDisplay(); updatePips();
+      document.getElementById('session-text').textContent = 'SESSION ' + currentSession + ' · ' + sessionsComplete + ' COMPLETE';
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(interval); running = false; remaining = totalSeconds;
+  document.getElementById('start-btn').textContent = 'START';
+  updateDisplay(); updatePips();
+}
+
+updateDisplay(); updatePips();
+</script>
+</body>
+</html>

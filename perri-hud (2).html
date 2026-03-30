@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perri HUD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IM+Fell+English&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; background: #1A1208; overflow-x: hidden; }
+  :root {
+    --pom-light: #C4314B; --pom-dark: #5C0E1E;
+    --gold: #C9912A; --gold-light: #F0C060; --gold-dark: #7A5510;
+    --stone: #2A2018; --stone-mid: #3D3024; --stone-light: #5C4A32;
+    --cream: #F2E8D0; --cream-dim: #B8A98A;
+    --pixel: 'Press Start 2P', monospace;
+    --serif: 'IM Fell English', serif;
+  }
+  .hud-wrap {
+    width: 100%;
+    background: linear-gradient(180deg, #1A1208 0%, #2A1E0E 60%, #1A1208 100%);
+    border-top: 3px solid var(--gold-dark);
+    border-bottom: 3px solid var(--gold-dark);
+    position: relative; overflow: hidden; font-family: var(--pixel);
+  }
+  .hud-wrap::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px);
+    pointer-events: none;
+  }
+  .corner { position: absolute; width: 16px; height: 16px; background: var(--gold-dark); z-index: 2; }
+  .corner.tl { top: 0; left: 0; } .corner.tr { top: 0; right: 0; }
+  .corner.bl { bottom: 0; left: 0; } .corner.br { bottom: 0; right: 0; }
+  .hud-header { position: relative; z-index: 1; text-align: center; padding: 14px 20px 8px; border-bottom: 2px solid var(--stone-light); }
+  .hud-title { font-family: var(--serif); font-size: 11px; color: var(--cream-dim); letter-spacing: 0.3em; text-transform: uppercase; font-style: italic; }
+  .hud-name { font-family: var(--pixel); font-size: 7px; color: var(--gold-light); margin-top: 5px; letter-spacing: 0.1em; }
+  .avatar-row { position: relative; z-index: 1; display: flex; justify-content: center; padding: 16px 0 8px; }
+  .avatar { width: 72px; height: 72px; image-rendering: pixelated; }
+  .stat-row { position: relative; z-index: 1; display: flex; gap: 10px; padding: 0 14px 16px; }
+  .stat-btn { flex: 1; padding: 0; }
+  .stat-btn-inner {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 8px 9px; gap: 5px; background: var(--stone);
+    border-top: 3px solid var(--stone-light); border-left: 3px solid var(--stone-light);
+    border-right: 3px solid #0D0A06; border-bottom: 3px solid #0D0A06;
+  }
+  .stat-btn.sacred .stat-btn-inner { border-top-color: var(--pom-light); border-left-color: var(--pom-light); border-right-color: var(--pom-dark); border-bottom-color: var(--pom-dark); }
+  .stat-btn.xp .stat-btn-inner { border-top-color: #6A5AAC; border-left-color: #6A5AAC; border-right-color: #2D2347; border-bottom-color: #2D2347; }
+  .stat-btn.gold .stat-btn-inner { border-top-color: var(--gold-light); border-left-color: var(--gold-light); border-right-color: var(--gold-dark); border-bottom-color: var(--gold-dark); }
+  .stat-icon { font-size: 14px; line-height: 1; display: block; }
+  .stat-label { font-size: 5px; letter-spacing: 0.08em; line-height: 1; }
+  .stat-btn.sacred .stat-label { color: var(--pom-light); }
+  .stat-btn.xp .stat-label { color: #9D8FD4; }
+  .stat-btn.gold .stat-label { color: var(--gold-light); }
+  .stat-value { font-size: 14px; line-height: 1; color: var(--cream); }
+  .stat-sub { font-size: 5px; color: var(--cream-dim); letter-spacing: 0.06em; line-height: 1; }
+  .pip-row { display: flex; gap: 3px; align-items: center; margin-top: 2px; }
+  .pip { width: 6px; height: 6px; background: var(--stone-light); flex-shrink: 0; }
+  .pip.on.sacred { background: var(--pom-light); }
+  .pip.on.xp { background: #7B6FBF; }
+  .pip.on.gold { background: var(--gold); }
+  .hud-footer { position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; gap: 12px; padding: 8px 16px 12px; border-top: 2px solid var(--stone-light); }
+  .footer-text { font-size: 5px; color: var(--cream-dim); letter-spacing: 0.1em; }
+  .divider-gem { width: 24px; height: 2px; background: var(--stone-light); position: relative; }
+  .divider-gem::before { content: ''; position: absolute; width: 6px; height: 6px; background: var(--pom-light); top: -2px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+</style>
+</head>
+<body>
+<div class="hud-wrap">
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+  <div class="hud-header">
+    <div class="hud-title">The Chronicle of</div>
+    <div class="hud-name">✦ PERRI ✦ The Liminal ✦</div>
+  </div>
+  <div class="avatar-row">
+    <svg class="avatar" viewBox="0 0 32 40" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
+      <rect x="12" y="2" width="8" height="8" fill="#C4314B"/>
+      <rect x="13" y="1" width="6" height="2" fill="#C4314B"/>
+      <rect x="11" y="3" width="2" height="6" fill="#C4314B"/>
+      <rect x="19" y="3" width="2" height="6" fill="#C4314B"/>
+      <rect x="13" y="10" width="6" height="1" fill="#C4314B"/>
+      <rect x="12" y="10" width="8" height="6" fill="#F2D4B0"/>
+      <rect x="11" y="11" width="2" height="4" fill="#F2D4B0"/>
+      <rect x="19" y="11" width="2" height="4" fill="#F2D4B0"/>
+      <rect x="13" y="15" width="1" height="1" fill="#8B1A2F"/>
+      <rect x="18" y="15" width="1" height="1" fill="#8B1A2F"/>
+      <rect x="14" y="17" width="4" height="1" fill="#8B1A2F"/>
+      <rect x="13" y="12" width="2" height="2" fill="#1A1208"/>
+      <rect x="17" y="12" width="2" height="2" fill="#1A1208"/>
+      <rect x="10" y="10" width="2" height="12" fill="#2A1E0E"/>
+      <rect x="20" y="10" width="2" height="12" fill="#2A1E0E"/>
+      <rect x="12" y="18" width="8" height="1" fill="#2A1E0E"/>
+      <rect x="12" y="19" width="8" height="10" fill="#3D3024"/>
+      <rect x="10" y="22" width="2" height="6" fill="#3D3024"/>
+      <rect x="20" y="22" width="2" height="6" fill="#3D3024"/>
+      <rect x="11" y="28" width="3" height="4" fill="#2A1E0E"/>
+      <rect x="18" y="28" width="3" height="4" fill="#2A1E0E"/>
+      <rect x="11" y="32" width="3" height="2" fill="#5C4A32"/>
+      <rect x="18" y="32" width="3" height="2" fill="#5C4A32"/>
+      <rect x="9" y="8" width="3" height="10" fill="#8B1A2F"/>
+      <rect x="20" y="8" width="3" height="10" fill="#8B1A2F"/>
+      <rect x="14" y="6" width="4" height="2" fill="#1A1208"/>
+      <rect x="14" y="7" width="1" height="1" fill="#C9912A"/>
+      <rect x="17" y="7" width="1" height="1" fill="#C9912A"/>
+    </svg>
+  </div>
+  <div class="stat-row">
+    <div class="stat-btn sacred">
+      <div class="stat-btn-inner">
+        <span class="stat-icon">🕯️</span>
+        <span class="stat-label">SACRED DAY</span>
+        <span class="stat-value" id="sacred-val">6</span>
+        <span class="stat-sub">IN THE CHRONICLE</span>
+        <div class="pip-row" id="sacred-pips"></div>
+      </div>
+    </div>
+    <div class="stat-btn xp">
+      <div class="stat-btn-inner">
+        <span class="stat-icon">⚔️</span>
+        <span class="stat-label">TOTAL XP</span>
+        <span class="stat-value" id="xp-val">200</span>
+        <span class="stat-sub">EXPERIENCE</span>
+        <div class="pip-row" id="xp-pips"></div>
+      </div>
+    </div>
+    <div class="stat-btn gold">
+      <div class="stat-btn-inner">
+        <span class="stat-icon">🪙</span>
+        <span class="stat-label">GOLD</span>
+        <span class="stat-value" id="gold-val">150</span>
+        <span class="stat-sub">IN THE TREASURY</span>
+        <div class="pip-row" id="gold-pips"></div>
+      </div>
+    </div>
+  </div>
+  <div class="hud-footer">
+    <div class="divider-gem"></div>
+    <span class="footer-text">LIMINAL · TWO-WORLD WALKER</span>
+    <div class="divider-gem"></div>
+  </div>
+</div>
+<script>
+function makePips(container, count, max, colorClass) {
+  container.innerHTML = '';
+  const slots = 7;
+  const filled = Math.min(slots, Math.round((count / max) * slots));
+  for (let i = 0; i < slots; i++) {
+    const p = document.createElement('div');
+    p.className = 'pip' + (i < filled ? ' on ' + colorClass : '');
+    container.appendChild(p);
+  }
+}
+makePips(document.getElementById('sacred-pips'), 6, 365, 'sacred');
+makePips(document.getElementById('xp-pips'), 200, 5000, 'xp');
+makePips(document.getElementById('gold-pips'), 150, 2000, 'gold');
+</script>
+</body>
+</html>
