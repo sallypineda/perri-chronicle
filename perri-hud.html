@@ -1,1 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--pom:#8B1A1A;--pom-light:#E8A0A0;--gold:#C9902A;--gold-light:#E8C878;--stone:#1A1614;--stone-mid:#2D2420;--stone-light:#3D3028;--ash:#8A7A6A;--mist:#C8B89A;--cream:#F0E8D8;--fd:'Cinzel',serif;--fb:'Crimson Pro',serif;--fm:'Share Tech Mono',monospace;}
+body{background:var(--stone);color:var(--cream);font-family:var(--fb);min-height:100vh;overflow-x:hidden;}
+.screen{display:none;}.screen.active{display:block;}
+.dash{min-height:100vh;position:relative;}
+.dash-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 15%,rgba(139,26,26,0.12) 0%,transparent 60%);pointer-events:none;}
+.dash-inner{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:28px 20px 40px;}
+.hdr{text-align:center;margin-bottom:20px;}
+.hdr-eye{font-family:var(--fm);font-size:10px;color:var(--ash);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
+.hdr-title{font-family:var(--fd);font-size:26px;font-weight:700;color:var(--gold-light);letter-spacing:2px;margin-bottom:3px;}
+.hdr-sub{font-family:var(--fb);font-style:italic;font-size:13px;color:var(--ash);}
+.stats-row{display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+.stat-pill{display:flex;align-items:center;gap:10px;background:var(--stone-mid);border:1px solid rgba(201,144,42,0.3);border-radius:32px;padding:7px 16px;font-family:var(--fm);}
+.lbl{color:var(--ash);font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.val{color:var(--gold-light);font-size:15px;font-weight:bold;}
+.stat-sep{width:1px;height:18px;background:rgba(201,144,42,0.2);}
+.scene-wrap{max-width:580px;margin:0 auto 20px;border:2px solid rgba(201,144,42,0.3);border-radius:4px;background:var(--stone-mid);overflow:hidden;}
+.scene-wrap svg{display:block;width:100%;height:auto;}
+.arc-strip{max-width:700px;margin:0 auto 20px;}
+.arc-strip-label{font-family:var(--fm);font-size:10px;color:var(--ash);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:10px;}
+.arc-acts{display:flex;gap:6px;}
+.arc-act{flex:1;background:var(--stone-mid);border:1px solid rgba(201,144,42,0.2);border-radius:6px;padding:8px 6px;text-align:center;}
+.arc-act.current{border-color:var(--gold);background:rgba(201,144,42,0.08);}
+.arc-act.locked{opacity:0.6;}
+.arc-act-num{font-family:var(--fm);font-size:10px;color:var(--ash);margin-bottom:3px;}
+.arc-act-name{font-family:var(--fd);font-size:9px;color:var(--mist);line-height:1.3;}
+.arc-act.current .arc-act-name{color:var(--gold-light);}
+.arc-act-bar{height:2px;background:rgba(255,255,255,0.08);border-radius:1px;margin-top:6px;overflow:hidden;}
+.arc-act-fill{height:100%;background:var(--gold);border-radius:1px;}
+.arc-act-lock{font-size:9px;color:var(--ash);opacity:0.5;margin-top:4px;}
+.divider{display:flex;align-items:center;gap:10px;margin:0 auto 16px;max-width:700px;}
+.div-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,144,42,0.3),transparent);}
+.div-txt{font-family:var(--fm);font-size:10px;color:var(--ash);letter-spacing:2px;text-transform:uppercase;white-space:nowrap;}
+.realm-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;max-width:700px;margin:0 auto 20px;}
+.realm-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px 8px;background:var(--stone-mid);border:1px solid rgba(201,144,42,0.2);border-radius:6px;cursor:pointer;transition:all 0.15s;}
+.realm-btn:hover{border-color:rgba(201,144,42,0.55);transform:translateY(-2px);}
+.realm-btn:active{transform:scale(0.97);}
+.realm-icon{font-size:20px;line-height:1;}
+.realm-name{font-size:9px;text-align:center;line-height:1.3;font-family:var(--fm);color:var(--mist);}
+.realm-act-label{font-size:8px;font-family:var(--fm);color:var(--gold);opacity:0.8;}
+.realm-prog{width:100%;height:2px;background:rgba(255,255,255,0.08);border-radius:1px;margin-top:3px;overflow:hidden;}
+.realm-prog-fill{height:100%;background:var(--gold);border-radius:1px;}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:700px;margin:0 auto 14px;}
+.wins-panel{max-width:700px;margin:0 auto;}
+.panel{background:var(--stone-mid);border:1px solid rgba(201,144,42,0.18);border-radius:6px;padding:14px;}
+.panel-title{font-family:var(--fd);font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.panel-title::after{content:'';flex:1;height:1px;background:rgba(201,144,42,0.18);}
+.quest-item{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.quest-item:last-child{border-bottom:none;}
+.qbadge{font-size:9px;padding:2px 5px;border-radius:3px;font-family:var(--fm);flex-shrink:0;}
+.qbadge.seed{background:rgba(26,92,58,0.3);color:#6EC99A;border:1px solid rgba(110,201,154,0.25);}
+.qbadge.growth{background:rgba(201,144,42,0.2);color:var(--gold-light);border:1px solid rgba(201,144,42,0.25);}
+.qbadge.bloom{background:rgba(139,26,26,0.3);color:var(--pom-light);border:1px solid rgba(139,26,26,0.35);}
+.quest-txt{font-size:12px;color:var(--mist);flex:1;line-height:1.3;}
+.chron-item{padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.chron-item:last-child{border-bottom:none;}
+.chron-date{font-family:var(--fm);font-size:10px;color:var(--ash);margin-bottom:2px;}
+.chron-txt{font-size:12px;color:var(--mist);font-style:italic;line-height:1.4;}
+.chron-xp{font-family:var(--fm);font-size:10px;color:var(--gold);margin-top:2px;}
+.wins-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;}
+.win-card{background:rgba(201,144,42,0.06);border:1px solid rgba(201,144,42,0.25);border-radius:6px;padding:10px 12px;}
+.win-realm{font-family:var(--fm);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:4px;}
+.win-title{font-size:12px;color:var(--cream);line-height:1.4;margin-bottom:4px;}
+.win-meta{font-family:var(--fm);font-size:10px;color:var(--ash);}
+.win-meta span{color:var(--gold);}
+.loading{font-family:var(--fm);font-size:11px;color:var(--ash);text-align:center;padding:16px;letter-spacing:1px;}
+.error-msg{font-family:var(--fm);font-size:11px;color:var(--pom-light);text-align:center;padding:10px;letter-spacing:1px;}
+.realm-pg{min-height:100vh;background:var(--stone);}
+.back{position:absolute;top:14px;left:16px;background:rgba(26,22,20,0.75);border:1px solid rgba(201,144,42,0.3);color:var(--gold-light);font-family:var(--fm);font-size:10px;letter-spacing:1px;padding:5px 12px;border-radius:4px;cursor:pointer;z-index:10;transition:all 0.15s;}
+.back:hover{background:rgba(201,144,42,0.12);}
+.realm-hero{position:relative;height:260px;overflow:hidden;}
+.realm-hero svg{position:absolute;inset:0;width:100%;height:100%;}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(26,22,20,0.1) 0%,rgba(26,22,20,0.9) 100%);}
+.hero-text{position:absolute;bottom:20px;left:28px;right:28px;}
+.hero-eye{font-family:var(--fm);font-size:10px;color:var(--ash);letter-spacing:3px;text-transform:uppercase;margin-bottom:5px;}
+.hero-title{font-family:var(--fd);font-size:28px;color:var(--gold-light);letter-spacing:1px;}
+.hero-quote{font-family:var(--fb);font-style:italic;font-size:13px;color:var(--mist);margin-top:3px;}
+.realm-body{max-width:860px;margin:0 auto;padding:24px 20px 40px;}
+.realm-arc-section{margin-bottom:24px;}
+.section-head{font-family:var(--fd);font-size:11px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid rgba(201,144,42,0.2);}
+.arc-acts-full{display:flex;flex-direction:column;gap:8px;}
+.arc-full-act{background:var(--stone-mid);border:1px solid rgba(201,144,42,0.15);border-radius:8px;padding:12px 16px;}
+.arc-full-act.current{border-color:var(--gold);background:rgba(201,144,42,0.06);}
+.arc-full-act.locked{opacity:0.45;}
+.arc-full-header{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.arc-full-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:var(--fm);flex-shrink:0;}
+.arc-full-num.cur{background:rgba(201,144,42,0.2);color:var(--gold-light);border:1px solid var(--gold);}
+.arc-full-num.lck{background:var(--stone-light);color:var(--ash);border:1px solid rgba(255,255,255,0.08);}
+.arc-full-name{font-family:var(--fd);font-size:13px;color:var(--mist);flex:1;}
+.arc-full-act.current .arc-full-name{color:var(--gold-light);}
+.arc-full-xp{font-family:var(--fm);font-size:10px;color:var(--ash);}
+.arc-full-myth{font-size:12px;color:var(--ash);font-style:italic;line-height:1.6;padding-left:36px;}
+.arc-full-act.current .arc-full-myth{color:var(--mist);}
+.arc-full-bar{height:2px;background:rgba(255,255,255,0.06);border-radius:1px;margin:8px 0 0 36px;overflow:hidden;}
+.arc-full-fill{height:100%;background:var(--gold);border-radius:1px;}
+.hecate-block{margin:6px 0 0 36px;padding:8px 12px;border-left:2px solid var(--pom);background:rgba(139,26,26,0.08);border-radius:0 5px 5px 0;}
+.hecate-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--pom-light);margin-bottom:4px;font-family:var(--fm);}
+.hecate-txt{font-size:11px;color:var(--ash);font-style:italic;line-height:1.6;}
+.arc-full-act.current .hecate-txt{color:var(--mist);}
+.realm-stats-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.r-stat{flex:1;min-width:100px;background:var(--stone-mid);border:1px solid rgba(201,144,42,0.2);border-radius:6px;padding:12px;text-align:center;}
+.r-stat-val{font-family:var(--fd);font-size:24px;color:var(--gold-light);}
+.r-stat-lbl{font-family:var(--fm);font-size:9px;color:var(--ash);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;}
+.realm-two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.realm-quest-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.realm-quest-item:last-child{border-bottom:none;}
+.rqi-left{flex:1;}
+.rqi-name{font-size:13px;color:var(--mist);line-height:1.4;margin-bottom:3px;}
+.rqi-size{font-family:var(--fm);font-size:9px;color:var(--ash);}
+.rqi-xp{font-family:var(--fm);font-size:11px;color:var(--gold);flex-shrink:0;padding-top:2px;}
+.realm-chron-entry{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.realm-chron-entry:last-child{border-bottom:none;}
+.rce-title{font-size:13px;color:var(--cream);margin-bottom:3px;line-height:1.4;}
+.rce-meta{font-family:var(--fm);font-size:10px;color:var(--ash);display:flex;gap:10px;}
+.rce-meta span{color:var(--gold);}
+</style>
+</head>
+<body>
 
+<script>
+/* ═══════════════════════════════════════════════
+   STEP 1: Paste your Notion secret token below
+   Replace YOUR_SECRET_TOKEN_HERE with secret_xxx
+   ═══════════════════════════════════════════════ */
+const NOTION_TOKEN = 'YOUR_SECRET_TOKEN_HERE';
+const CHRONICLE_DB = '19929e15-290d-4725-990f-97b0b17b328d';
+</script>
+
+<div id="s-dash" class="screen active">
+<div class="dash">
+<div class="dash-bg"></div>
+<div class="dash-inner">
+
+<div class="hdr">
+  <div class="hdr-eye">&#9679; The Chronicle of Perri &#9679;</div>
+  <div class="hdr-title">Welcome back, Liminal One</div>
+  <div class="hdr-sub">The torch has been burning. The Chronicle holds.</div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-pill">
+    <div><div class="lbl">Sacred Number</div><div class="val" id="stat-sacred">—</div></div>
+    <div class="stat-sep"></div>
+    <div><div class="lbl">Total XP</div><div class="val" id="stat-xp">—</div></div>
+    <div class="stat-sep"></div>
+    <div><div class="lbl">Gold</div><div class="val" id="stat-gold">—</div></div>
+    <div class="stat-sep"></div>
+    <div><div class="lbl">Act</div><div class="val" id="stat-act" style="font-size:12px;color:var(--mist)">I — The Girl</div></div>
+  </div>
+</div>
+
+<div class="scene-wrap">
+<svg viewBox="0 0 580 220" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;">
+  <defs><pattern id="st" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="2" height="2" x="10" y="8" fill="rgba(255,255,255,0.4)"/><rect width="1" height="1" x="28" y="18" fill="rgba(255,255,255,0.3)"/><rect width="2" height="2" x="5" y="30" fill="rgba(255,255,255,0.25)"/></pattern></defs>
+  <rect width="580" height="180" fill="#0D0A12"/><rect width="580" height="180" fill="url(#st)"/>
+  <rect x="460" y="16" width="36" height="36" fill="#E8D8B0"/><rect x="466" y="22" width="24" height="24" fill="#E8D8B0"/>
+  <rect x="0" y="168" width="580" height="52" fill="#1A1614"/><rect x="0" y="164" width="580" height="8" fill="#2D1A10"/>
+  <rect x="24" y="88" width="8" height="80" fill="#3D2010"/><rect x="18" y="50" width="20" height="48" fill="#1A4A1A"/><rect x="14" y="60" width="28" height="38" fill="#1A3D1A"/><rect x="20" y="62" width="8" height="8" fill="#8B1A1A"/>
+  <rect x="538" y="98" width="8" height="70" fill="#3D2010"/><rect x="532" y="66" width="20" height="44" fill="#1A4A1A"/><rect x="528" y="74" width="28" height="34" fill="#1A3D1A"/>
+  <rect x="228" y="52" width="12" height="128" fill="#3D3028"/><rect x="340" y="52" width="12" height="128" fill="#3D3028"/><rect x="226" y="48" width="120" height="14" fill="#4A3D2E"/><rect x="252" y="48" width="4" height="12" fill="#C9902A"/><rect x="324" y="48" width="4" height="12" fill="#C9902A"/>
+  <rect x="274" y="98" width="28" height="70" fill="#6B1010"/><rect x="270" y="108" width="36" height="50" fill="#8B1A1A"/><rect x="266" y="143" width="44" height="25" fill="#6B1010"/><rect x="270" y="123" width="36" height="6" fill="#C9902A"/>
+  <rect x="256" y="108" width="14" height="8" fill="#C8A870"/><rect x="306" y="108" width="14" height="8" fill="#C8A870"/>
+  <rect x="266" y="96" width="44" height="22" fill="#2D1A1A"/><rect x="282" y="86" width="12" height="14" fill="#C8A870"/><rect x="276" y="64" width="24" height="24" fill="#C8A870"/>
+  <rect x="274" y="60" width="28" height="8" fill="#1A0A0A"/><rect x="272" y="64" width="4" height="20" fill="#1A0A0A"/><rect x="300" y="64" width="4" height="24" fill="#1A0A0A"/>
+  <rect x="278" y="58" width="20" height="6" fill="#1A4A1A"/><rect x="281" y="54" width="4" height="6" fill="#8B1A1A"/><rect x="287" y="52" width="4" height="6" fill="#8B1A1A"/><rect x="293" y="54" width="4" height="6" fill="#8B1A1A"/>
+  <rect x="282" y="71" width="4" height="4" fill="#C9902A"/><rect x="292" y="71" width="4" height="4" fill="#C9902A"/>
+  <rect x="306" y="104" width="4" height="20" fill="#5C3010"/><rect x="304" y="96" width="8" height="10" fill="#E8A020"/><rect x="306" y="92" width="4" height="6" fill="#FFC840"/>
+  <rect x="176" y="156" width="6" height="12" fill="#C8B890"/><rect x="174" y="152" width="10" height="6" fill="#E8D070"/><rect x="178" y="148" width="2" height="6" fill="#FFC840"/>
+  <rect x="392" y="152" width="6" height="16" fill="#C8B890"/><rect x="390" y="148" width="10" height="6" fill="#E8D070"/><rect x="394" y="144" width="2" height="6" fill="#FFC840"/>
+  <text x="290" y="44" text-anchor="middle" font-family="monospace" font-size="8" fill="#C9902A" letter-spacing="3">ENTER THE CHRONICLE</text>
+</svg>
+</div>
+
+<div class="arc-strip">
+  <div class="arc-strip-label">&#9670; The Persephone Arc &#9670;</div>
+  <div class="arc-acts">
+    <div class="arc-act current"><div class="arc-act-num">ACT I</div><div class="arc-act-name">The Girl Who Wandered</div><div class="arc-act-bar"><div class="arc-act-fill" id="arc-fill-1" style="width:0%"></div></div></div>
+    <div class="arc-act locked"><div class="arc-act-num">ACT II</div><div class="arc-act-name">The Descent</div><div class="arc-act-bar"><div class="arc-act-fill" style="width:0%"></div></div><div class="arc-act-lock">500 XP</div></div>
+    <div class="arc-act locked"><div class="arc-act-num">ACT III</div><div class="arc-act-name">The Throne in Darkness</div><div class="arc-act-bar"><div class="arc-act-fill" style="width:0%"></div></div><div class="arc-act-lock">1,500 XP</div></div>
+    <div class="arc-act locked"><div class="arc-act-num">ACT IV</div><div class="arc-act-name">The Return</div><div class="arc-act-bar"><div class="arc-act-fill" style="width:0%"></div></div><div class="arc-act-lock">3,000 XP</div></div>
+    <div class="arc-act locked"><div class="arc-act-num">ACT V</div><div class="arc-act-name">Queen of Both Worlds</div><div class="arc-act-bar"><div class="arc-act-fill" style="width:0%"></div></div><div class="arc-act-lock">5,000 XP</div></div>
+  </div>
+</div>
+
+<div class="divider"><div class="div-line"></div><div class="div-txt">&#9670; Choose Your Realm &#9670;</div><div class="div-line"></div></div>
+
+<div class="realm-grid">
+  <div class="realm-btn" onclick="goRealm('music')"><span class="realm-icon">&#127928;</span><span class="realm-name">The Music</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:20%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('story')"><span class="realm-icon">&#128214;</span><span class="realm-name">The Story</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:15%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('engine')"><span class="realm-icon">&#128188;</span><span class="realm-name">The Engine</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:35%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('body')"><span class="realm-icon">&#127807;</span><span class="realm-name">The Body</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:40%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('land')"><span class="realm-icon">&#127802;</span><span class="realm-name">The Land</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:25%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('agency')"><span class="realm-icon">&#9889;</span><span class="realm-name">The Agency</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:15%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('hearth')"><span class="realm-icon">&#128293;</span><span class="realm-name">The Hearth</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:50%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('village')"><span class="realm-icon">&#127758;</span><span class="realm-name">The Village</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:20%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('sacred')"><span class="realm-icon">&#128052;</span><span class="realm-name">The Sacred</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:55%"></div></div></div>
+  <div class="realm-btn" onclick="goRealm('treasury')"><span class="realm-icon">&#128176;</span><span class="realm-name">The Treasury</span><span class="realm-act-label">Act I</span><div class="realm-prog"><div class="realm-prog-fill" style="width:10%"></div></div></div>
+</div>
+
+<div class="lower">
+  <div class="panel">
+    <div class="panel-title">Today's Quests</div>
+    <div id="today-quests"><div class="loading">Loading...</div></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Recent Chronicle</div>
+    <div id="recent-chron"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<div class="wins-panel">
+  <div class="panel">
+    <div class="panel-title">This Week's Wins</div>
+    <div id="weekly-wins"><div class="loading">Loading wins...</div></div>
+  </div>
+</div>
+
+</div></div></div>
+
+<!-- REALM PAGE -->
+<div id="s-realm" class="screen">
+<div class="realm-pg" style="position:relative;">
+  <button class="back" onclick="goDash()">&#8592; Dashboard</button>
+  <div class="realm-hero">
+    <svg id="r-art" viewBox="0 0 860 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated;"></svg>
+    <div class="hero-overlay"></div>
+    <div class="hero-text">
+      <div class="hero-eye" id="r-eye"></div>
+      <div class="hero-title" id="r-title"></div>
+      <div class="hero-quote" id="r-quote"></div>
+    </div>
+  </div>
+  <div class="realm-body">
+    <div class="realm-stats-row">
+      <div class="r-stat"><div class="r-stat-val" id="r-xp">—</div><div class="r-stat-lbl">Realm XP</div></div>
+      <div class="r-stat"><div class="r-stat-val" id="r-entries">—</div><div class="r-stat-lbl">Chronicle Entries</div></div>
+      <div class="r-stat"><div class="r-stat-val" id="r-blooms">—</div><div class="r-stat-lbl">Blooms Earned</div></div>
+    </div>
+    <div class="realm-arc-section">
+      <div class="section-head">Realm Arc</div>
+      <div class="arc-acts-full" id="r-arc"></div>
+    </div>
+    <div class="realm-two">
+      <div><div class="section-head">Quest Pool</div><div id="r-quests"></div></div>
+      <div><div class="section-head">Chronicle</div><div id="r-chron"><div class="loading">Loading...</div></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const ACTS=[
+  {name:"The Girl Who Wandered",threshold:0,max:500},
+  {name:"The Descent",threshold:500,max:1500},
+  {name:"The Throne in Darkness",threshold:1500,max:3000},
+  {name:"The Return",threshold:3000,max:5000},
+  {name:"Queen of Both Worlds",threshold:5000,max:9999}
+];
+
+const REALMS={
+  music:{name:"The Music",eye:"&#127928; Realm of Song",quote:'"The humming is not preparation. The humming is already the thing."',arc:[{name:"The Humming",tagline:"She sings when no one is listening.",xp:"0–150",pct:30,hecate:"She sang alone in the car and didn't turn the radio on to cover it.",cur:true},{name:"The Claiming",tagline:"She says it out loud: I am a musician.",xp:"150–400",locked:true},{name:"The Making",tagline:"She finishes things. Real things.",xp:"400–800",locked:true},{name:"The Offering",tagline:"She gives the music to the world.",xp:"800–1,400",locked:true},{name:"The Voice",tagline:"She is a musician. She always was.",xp:"1,400+",locked:true}],quests:[{n:"Morning vocal warmup",s:"Seed",xp:10},{n:"Practice session (30+ min)",s:"Seed",xp:10},{n:"Collaborate on a song",s:"Growth",xp:25},{n:"Record and finish a demo",s:"Bloom",xp:75}]},
+  story:{name:"The Story",eye:"&#128214; Realm of Story & Stage",quote:'"The page and the stage are both doors to the same room."',arc:[{name:"The First Page & First Stage",tagline:"She opens the document. She steps into the room.",xp:"0–150",pct:20,hecate:"Both doors lead to the same room.",cur:true},{name:"The Draft & The Rehearsal",tagline:"She works through the ugly middle.",xp:"150–400",locked:true},{name:"The Finishing",tagline:"FADE OUT. Curtain.",xp:"400–800",locked:true},{name:"The Sending & The Showing",tagline:"The work leaves her hands.",xp:"800–1,400",locked:true},{name:"The Storyteller",tagline:"On the page. On the stage. Both.",xp:"1,400+",locked:true}],quests:[{n:"Screenwriting class session",s:"Seed",xp:10},{n:"Pages with co-writers",s:"Growth",xp:25},{n:"Acting class or workshop",s:"Growth",xp:25},{n:"Complete a full script draft",s:"Bloom",xp:75}]},
+  engine:{name:"The Engine",eye:"&#128188; The Engine",quote:'"It is not her identity. It is her leverage."',arc:[{name:"The Running",tagline:"She keeps the engine running.",xp:"0–150",pct:60,hecate:"She finished the work and closed the laptop and went to her actual life without guilt.",cur:true},{name:"The Building",tagline:"The work she builds outlasts the role.",xp:"150–400",locked:true},{name:"The Leverage",tagline:"She uses the Engine — it does not use her.",xp:"400–800",locked:true},{name:"The Integration",tagline:"The Engine and the life run together.",xp:"800–1,400",locked:true},{name:"The Sovereign Operator",tagline:"She runs it beautifully and goes home.",xp:"1,400+",locked:true}],quests:[{n:"Strategic planning session",s:"Growth",xp:25},{n:"AI automation milestone",s:"Growth",xp:25},{n:"Major deliverable shipped",s:"Bloom",xp:75},{n:"Lead a cross-functional meeting",s:"Seed",xp:10}]},
+  body:{name:"The Body",eye:"&#127807; Realm of the Body",quote:'"The vessel is not a tool. She is learning this."',arc:[{name:"The Tending",tagline:"She begins to treat it like it matters.",xp:"0–150",pct:50,hecate:"She took the supplement and didn't make a joke about it. That was the beginning.",cur:true},{name:"The Repair",tagline:"She stops depleting what isn't restored.",xp:"150–400",locked:true},{name:"The Listening",tagline:"She starts to hear what it's been saying.",xp:"400–800",locked:true},{name:"The Inhabiting",tagline:"She moves in. The body becomes home.",xp:"800–1,400",locked:true},{name:"The Sovereign",tagline:"Queen of the body. Fully present. Fully well.",xp:"1,400+",locked:true}],quests:[{n:"Take all supplements",s:"Seed",xp:10},{n:"Intentional rest day",s:"Seed",xp:10},{n:"Workout session",s:"Growth",xp:25},{n:"Labs + bloodwork review",s:"Bloom",xp:75}]},
+  land:{name:"The Land",eye:"&#127802; Realm of the Land",quote:'"She is rehearsing ownership. There is a difference."',arc:[{name:"The Dreaming",tagline:"She looks at the land. She does not look away.",xp:"0–150",pct:23,hecate:"She pulled up the listing again. Third time this week.",cur:true},{name:"The Foundation",tagline:"She builds the financial ground beneath the dream.",xp:"150–400",locked:true},{name:"The Offer",tagline:"She puts her name on something real.",xp:"400–800",locked:true},{name:"The Farm",tagline:"The land is hers. She walks on it.",xp:"800–1,400",locked:true},{name:"The Rooting",tagline:"She has built something that will outlast the building.",xp:"1,400+",locked:true}],quests:[{n:"Research land listings",s:"Seed",xp:10},{n:"Connect with realtor or broker",s:"Growth",xp:25},{n:"Make an offer on land",s:"Bloom",xp:75}]},
+  agency:{name:"The Agency",eye:"&#9889; Realm of the Agency",quote:'"The action matters more than the reception."',arc:[{name:"The First Move",tagline:"She takes one real action toward the career she wants.",xp:"0–150",pct:27,hecate:"She posted the thing she almost didn't post.",cur:true},{name:"The Consistency",tagline:"She shows up in public even when it feels pointless.",xp:"150–400",locked:true},{name:"The Traction",tagline:"Something lands. Someone notices.",xp:"400–800",locked:true},{name:"The Strategy",tagline:"She stops reacting and starts directing.",xp:"800–1,400",locked:true},{name:"The Career",tagline:"The creative life is her actual life.",xp:"1,400+",locked:true}],quests:[{n:"Post to social / show up online",s:"Seed",xp:10},{n:"Pitch or submit creative work",s:"Growth",xp:25},{n:"Land a significant opportunity",s:"Bloom",xp:75}]},
+  hearth:{name:"The Hearth",eye:"&#128293; Realm of the Hearth",quote:'"The invisible labor that holds the whole world up."',arc:[{name:"The Counting",tagline:"She starts counting what she always dismissed.",xp:"0–150",pct:37,hecate:"She logged feeding the cats as a quest completed. She is finally including herself in her own ledger.",cur:true},{name:"The Tending",tagline:"She cares for the home like it matters.",xp:"150–400",locked:true},{name:"The Sanctuary",tagline:"The home becomes a place she wants to be.",xp:"400–800",locked:true},{name:"The Two Hearths",tagline:"She builds home in two places. Both real.",xp:"800–1,400",locked:true},{name:"The Keeper of the Flame",tagline:"The hearth is always lit. In both worlds.",xp:"1,400+",locked:true}],quests:[{n:"Feed yourself a real meal",s:"Seed",xp:10},{n:"Care for Bartholomew and Honey",s:"Seed",xp:10},{n:"Full home reset",s:"Growth",xp:25},{n:"Deep seasonal home tend",s:"Bloom",xp:75}]},
+  village:{name:"The Village",eye:"&#127758; Realm of the Village",quote:'"She is seen. She is known. She tends her people."',arc:[{name:"The Reaching",tagline:"She shows up for her people across distance.",xp:"0–150",pct:23,hecate:"She called at an inconvenient hour just to hear his voice.",cur:true},{name:"The Being Known",tagline:"She lets people see the real version.",xp:"150–400",locked:true},{name:"The Audience",tagline:"Strangers become witnesses.",xp:"400–800",locked:true},{name:"The Closing Distance",tagline:"The long-distance love becomes a shared life.",xp:"800–1,400",locked:true},{name:"The Known One",tagline:"She is seen. She is loved. She lets it be enough.",xp:"1,400+",locked:true}],quests:[{n:"Call or message partner",s:"Seed",xp:10},{n:"Connect with a friend meaningfully",s:"Growth",xp:25},{n:"Show up publicly",s:"Growth",xp:25}]},
+  sacred:{name:"The Sacred",eye:"&#128052; The Sacred Realm",quote:'"Horses. Land. Quiet. The thing that makes everything else possible."',arc:[{name:"The Showing Up",tagline:"She comes. To the barn, to the land, to the quiet.",xp:"0–150",pct:80,hecate:"The Sacred realm does not need to be built. It just needs her to keep returning.",cur:true},{name:"The Partnership",tagline:"She stops riding and starts listening.",xp:"150–400",locked:true},{name:"The Trust",tagline:"She stops bracing. She breathes. She goes over clean.",xp:"400–800",locked:true},{name:"The Devotion",tagline:"She protects this realm. Non-negotiable.",xp:"800–1,400",locked:true},{name:"The Sanctuary",tagline:"The Sacred is the ground everything grows from.",xp:"1,400+",locked:true}],quests:[{n:"Jumping lesson",s:"Growth",xp:25},{n:"Barn time / grooming",s:"Seed",xp:10},{n:"Quiet time outside in nature",s:"Seed",xp:10},{n:"Horse show / competition",s:"Bloom",xp:75}]},
+  treasury:{name:"The Treasury",eye:"&#128176; The Treasury",quote:'"She is building a million-dollar life. One deliberate step at a time."',arc:[{name:"The System",tagline:"Every dollar has a direction.",xp:"0–150",pct:13,hecate:"She set up the automatic investment and didn't touch it for thirty days.",cur:true},{name:"The Property",tagline:"She buys real things that build real wealth.",xp:"150–400",locked:true},{name:"The Earning",tagline:"She grows what she makes — in every realm.",xp:"400–800",locked:true},{name:"The Compounding",tagline:"The money works while she sleeps.",xp:"800–1,400",locked:true},{name:"The Million",tagline:"She is a millionaire. She always knew she would be.",xp:"1,400+",locked:true}],quests:[{n:"Review budget / expenses",s:"Seed",xp:10},{n:"Move money to savings / investments",s:"Growth",xp:25},{n:"Research or execute investment move",s:"Growth",xp:25},{n:"Acquire property",s:"Bloom",xp:75}]}
+};
+
+function getProp(props,name,type){
+  const p=props[name];if(!p)return type==='number'?0:type==='multi_select'?[]:null;
+  if(type==='number')return p.number||0;
+  if(type==='title')return p.title?p.title.map(t=>t.plain_text).join(''):'';
+  if(type==='rich_text')return p.rich_text?p.rich_text.map(t=>t.plain_text).join(''):'';
+  if(type==='multi_select')return p.multi_select?p.multi_select.map(s=>s.name):[];
+  if(type==='date')return p.date?p.date.start:null;
+  return null;
+}
+
+function getActIdx(xp){for(let i=ACTS.length-1;i>=0;i--){if(xp>=ACTS[i].threshold)return i;}return 0;}
+function getActPct(xp){const i=getActIdx(xp);const a=ACTS[i];return Math.min(100,Math.round(((xp-a.threshold)/(a.max-a.threshold))*100));}
+
+async function notionFetch(dbId){
+  const r=await fetch(`https://api.notion.com/v1/databases/${dbId}/query`,{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${NOTION_TOKEN}`,'Notion-Version':'2022-06-01','Content-Type':'application/json'},
+    body:JSON.stringify({page_size:100})
+  });
+  if(!r.ok)throw new Error(`${r.status}`);
+  return r.json();
+}
+
+async function loadDashboard(){
+  if(NOTION_TOKEN==='YOUR_SECRET_TOKEN_HERE'){
+    ['today-quests','recent-chron','weekly-wins'].forEach(id=>{
+      document.getElementById(id).innerHTML='<div class="error-msg">&#9670; Open this file in a text editor and replace YOUR_SECRET_TOKEN_HERE with your Notion secret token</div>';
+    });
+    return;
+  }
+  try{
+    const data=await notionFetch(CHRONICLE_DB);
+    const entries=data.results||[];
+    let totalXP=0,totalGold=0,maxSacred=0;
+    entries.forEach(e=>{
+      totalXP+=getProp(e.properties,'XP Earned','number');
+      totalGold+=getProp(e.properties,'Gold Earned','number');
+      const s=getProp(e.properties,'Sacred Number','number');
+      if(s>maxSacred)maxSacred=s;
+    });
+    document.getElementById('stat-sacred').textContent=maxSacred;
+    document.getElementById('stat-xp').textContent=totalXP;
+    document.getElementById('stat-gold').textContent=totalGold+'⚙';
+    const actIdx=getActIdx(totalXP);
+    document.getElementById('stat-act').textContent=['I','II','III','IV','V'][actIdx]+' — '+ACTS[actIdx].name.split(' ').slice(0,3).join(' ');
+    if(actIdx===0)document.getElementById('arc-fill-1').style.width=getActPct(totalXP)+'%';
+
+    const sorted=[...entries].sort((a,b)=>getProp(b.properties,'Sacred Number','number')-getProp(a.properties,'Sacred Number','number'));
+
+    // Recent chronicle
+    let rHTML='';
+    sorted.slice(0,5).forEach(e=>{
+      const title=getProp(e.properties,'Entry Title','title')||'Untitled';
+      const sacred=getProp(e.properties,'Sacred Number','number');
+      const xp=getProp(e.properties,'XP Earned','number');
+      const gold=getProp(e.properties,'Gold Earned','number');
+      rHTML+=`<div class="chron-item"><div class="chron-date">Day ${sacred}</div><div class="chron-txt">${title}</div><div class="chron-xp">+${xp} XP${gold?' &nbsp;+'+gold+'&#9775;':''}</div></div>`;
+    });
+    document.getElementById('recent-chron').innerHTML=rHTML||'<div class="loading">No entries yet.</div>';
+
+    // Today's quests — show today's entry context + quest pool suggestions
+    const todayEntry=sorted[0];
+    let qHTML='';
+    if(todayEntry){
+      const wh=getProp(todayEntry.properties,'What Happened','rich_text');
+      if(wh) qHTML+=`<div class="chron-item" style="margin-bottom:8px;"><div class="chron-date">Today so far — Day ${getProp(todayEntry.properties,'Sacred Number','number')}</div><div class="chron-txt">${wh}</div></div>`;
+    }
+    qHTML+=`<div style="font-family:var(--fm);font-size:9px;color:var(--ash);letter-spacing:1px;margin:8px 0 6px;text-transform:uppercase;">Pick from the quest pool &#8594;</div>`;
+    [{n:"Morning vocal warmup",s:"seed"},{n:"Jumping lesson",s:"growth"},{n:"Feed Bartholomew & Honey",s:"seed"},{n:"Take all supplements",s:"seed"}].forEach(q=>{
+      qHTML+=`<div class="quest-item"><span class="qbadge ${q.s}">${q.s}</span><span class="quest-txt">${q.n}</span></div>`;
+    });
+    document.getElementById('today-quests').innerHTML=qHTML;
+
+    // This week's wins — XP >= 25, last 7 days by Sacred Number
+    const recentSacred=maxSacred;
+    const wins=entries.filter(e=>{
+      const xp=getProp(e.properties,'XP Earned','number');
+      const s=getProp(e.properties,'Sacred Number','number');
+      return xp>=25 && s>=(recentSacred-7);
+    }).sort((a,b)=>getProp(b.properties,'Sacred Number','number')-getProp(a.properties,'Sacred Number','number')).slice(0,8);
+
+    if(!wins.length){
+      document.getElementById('weekly-wins').innerHTML='<div class="loading">No wins logged this week yet. Go earn some.</div>';
+    } else {
+      let wHTML='<div class="wins-grid">';
+      wins.forEach(e=>{
+        const title=getProp(e.properties,'Entry Title','title')||'Untitled';
+        const sacred=getProp(e.properties,'Sacred Number','number');
+        const xp=getProp(e.properties,'XP Earned','number');
+        const realms=getProp(e.properties,'Realms Touched','multi_select');
+        wHTML+=`<div class="win-card"><div class="win-realm">${realms[0]||''}</div><div class="win-title">${title}</div><div class="win-meta">Day ${sacred} &nbsp;<span>+${xp} XP</span></div></div>`;
+      });
+      wHTML+='</div>';
+      document.getElementById('weekly-wins').innerHTML=wHTML;
+    }
+  }catch(err){
+    console.error(err);
+    ['today-quests','recent-chron','weekly-wins'].forEach(id=>{
+      document.getElementById(id).innerHTML='<div class="error-msg">Connection error — check your token and that the Perri Chronicle integration is connected to the database.</div>';
+    });
+  }
+}
+
+async function loadRealmChron(realmName){
+  if(NOTION_TOKEN==='YOUR_SECRET_TOKEN_HERE')return;
+  try{
+    const data=await notionFetch(CHRONICLE_DB);
+    const entries=(data.results||[]).filter(e=>{
+      const realms=getProp(e.properties,'Realms Touched','multi_select');
+      return realms.some(r=>r.toLowerCase().includes(realmName.toLowerCase()));
+    }).sort((a,b)=>getProp(b.properties,'Sacred Number','number')-getProp(a.properties,'Sacred Number','number')).slice(0,6);
+    let totalXP=0,blooms=0;
+    entries.forEach(e=>{const xp=getProp(e.properties,'XP Earned','number');totalXP+=xp;if(xp>=75)blooms++;});
+    document.getElementById('r-xp').textContent=totalXP;
+    document.getElementById('r-entries').textContent=entries.length;
+    document.getElementById('r-blooms').textContent=blooms;
+    let cHTML='';
+    entries.forEach(e=>{
+      const title=getProp(e.properties,'Entry Title','title')||'Untitled';
+      const sacred=getProp(e.properties,'Sacred Number','number');
+      const xp=getProp(e.properties,'XP Earned','number');
+      cHTML+=`<div class="realm-chron-entry"><div class="rce-title">${title}</div><div class="rce-meta">Day ${sacred}&nbsp;<span>+${xp} XP</span></div></div>`;
+    });
+    document.getElementById('r-chron').innerHTML=cHTML||'<div class="loading">No entries yet in this realm.</div>';
+  }catch(err){
+    document.getElementById('r-chron').innerHTML='<div class="error-msg">Could not load entries.</div>';
+  }
+}
+
+function goRealm(id){
+  const r=REALMS[id];if(!r)return;
+  document.getElementById('s-dash').classList.remove('active');
+  document.getElementById('s-realm').classList.add('active');
+  document.getElementById('r-eye').innerHTML=r.eye;
+  document.getElementById('r-title').textContent=r.name;
+  document.getElementById('r-quote').textContent=r.quote;
+  document.getElementById('r-xp').textContent='—';
+  document.getElementById('r-entries').textContent='—';
+  document.getElementById('r-blooms').textContent='—';
+  drawHero(id);buildArc(r.arc);buildQuests(r.quests);
+  document.getElementById('r-chron').innerHTML='<div class="loading">Loading...</div>';
+  loadRealmChron(r.name.replace('The ',''));
+  window.scrollTo(0,0);
+}
+
+function drawHero(id){
+  const svg=document.getElementById('r-art');
+  const bg={music:'#0A0810',story:'#080C14',engine:'#06080E',body:'#080A0E',land:'#060C06',agency:'#0A0A06',hearth:'#0E0806',village:'#08060E',sacred:'#06080A',treasury:'#0A0A06'}[id]||'#0A0810';
+  const ac={music:'#8B1A1A',story:'#1A3D6B',engine:'#1A3A6B',body:'#3D1A5C',land:'#1A5C1A',agency:'#5C5A10',hearth:'#5C2A0A',village:'#2A1A5C',sacred:'#1A5C2A',treasury:'#5C4A0A'}[id]||'#8B1A1A';
+  svg.innerHTML=`<rect width="860" height="260" fill="${bg}"/><defs><pattern id="sp" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse"><rect width="2" height="2" x="15" y="12" fill="rgba(255,255,255,0.5)"/><rect width="1" height="1" x="40" y="25" fill="rgba(255,255,255,0.4)"/><rect width="2" height="2" x="8" y="45" fill="rgba(255,255,255,0.3)"/></pattern></defs><rect width="860" height="260" fill="url(#sp)" opacity="0.5"/><rect x="0" y="210" width="860" height="50" fill="${bg}"/><rect x="0" y="205" width="860" height="8" fill="${ac}" opacity="0.25"/><rect x="350" y="70" width="12" height="140" fill="${ac}" opacity="0.5"/><rect x="498" y="70" width="12" height="140" fill="${ac}" opacity="0.5"/><rect x="348" y="66" width="124" height="14" fill="${ac}" opacity="0.6"/><rect x="288" y="90" width="28" height="120" fill="#6B1010"/><rect x="284" y="100" width="36" height="55" fill="${ac}" opacity="0.9"/><rect x="280" y="140" width="44" height="25" fill="${ac}" opacity="0.7"/><rect x="284" y="115" width="36" height="6" fill="#C9902A"/><rect x="270" y="102" width="14" height="8" fill="#C8A870"/><rect x="320" y="102" width="14" height="8" fill="#C8A870"/><rect x="280" y="90" width="44" height="20" fill="#2D1A1A"/><rect x="294" y="80" width="12" height="14" fill="#C8A870"/><rect x="288" y="60" width="24" height="22" fill="#C8A870"/><rect x="286" y="56" width="28" height="8" fill="#1A0A0A"/><rect x="284" y="60" width="4" height="18" fill="#1A0A0A"/><rect x="312" y="60" width="4" height="22" fill="#1A0A0A"/><rect x="290" y="54" width="20" height="6" fill="#1A4A1A"/><rect x="294" y="67" width="4" height="4" fill="#C9902A"/><rect x="304" y="67" width="4" height="4" fill="#C9902A"/><rect x="320" y="98" width="4" height="20" fill="#5C3010"/><rect x="318" y="90" width="8" height="10" fill="#E8A020"/><rect x="320" y="86" width="4" height="6" fill="#FFC840"/><text x="430" y="248" text-anchor="middle" font-family="monospace" font-size="8" fill="rgba(201,144,42,0.5)" letter-spacing="4">&#9670; PERRI WALKS BETWEEN WORLDS &#9670;</text>`;
+}
+
+function buildArc(acts){
+  const c=document.getElementById('r-arc');c.innerHTML='';
+  acts.forEach((a,i)=>{
+    const isCur=a.cur;const isLocked=a.locked;
+    const numCls=isCur?'cur':'lck';const cardCls=isCur?'current':isLocked?'locked':'';
+    c.innerHTML+=`<div class="arc-full-act ${cardCls}"><div class="arc-full-header"><div class="arc-full-num ${numCls}">${['I','II','III','IV','V'][i]}</div><div class="arc-full-name">${a.name}</div><div class="arc-full-xp">${a.xp} XP</div></div>${isCur?`<div class="arc-full-myth">${a.tagline}</div><div class="arc-full-bar"><div class="arc-full-fill" style="width:${a.pct||0}%"></div></div>${a.hecate?`<div class="hecate-block"><div class="hecate-lbl">Hecate witnesses</div><div class="hecate-txt">"${a.hecate}"</div></div>`:''}`:`<div class="arc-full-myth">${a.tagline}</div>`}</div>`;
+  });
+}
+
+function buildQuests(q){
+  const c=document.getElementById('r-quests');c.innerHTML='';
+  q.forEach(i=>{c.innerHTML+=`<div class="realm-quest-item"><div class="rqi-left"><div class="rqi-name">${i.n}</div><div class="rqi-size">${i.s}</div></div><div class="rqi-xp">+${i.xp} XP</div></div>`;});
+}
+
+function goDash(){
+  document.getElementById('s-realm').classList.remove('active');
+  document.getElementById('s-dash').classList.add('active');
+  window.scrollTo(0,0);
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
